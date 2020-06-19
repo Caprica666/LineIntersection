@@ -4,7 +4,7 @@ using Random = UnityEngine.Random;
 
 public class PointMesh
 {
-    public int PointSize = 10;
+    public float PointSize = 1;
     private List<Vector3> mVertices;
     private List<Color> mColors;
     List<int> mIndices;

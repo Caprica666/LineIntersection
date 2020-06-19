@@ -129,7 +129,7 @@ public class LineGroup
         }
         else if (mRightChild == null)
         {
-            e = new PlaneEvent(PlaneEvent.END, line);
+            e = new PlaneEvent(PlaneEvent.START, line);
             mRightChild = new LineGroup(e);
         }
         else
@@ -148,27 +148,34 @@ public class LineGroup
         }
         if (line.Start.x > mEvent.Point.x)
         {
-            mLeftChild.FindIntersections(intersections, line);
+            if (mLeftChild != null)
+            {
+                mLeftChild.FindIntersections(intersections, line);
+            }
         }
         else
         {
-            mRightChild.FindIntersections(intersections, line);
+            if (mRightChild != null)
+            {
+                mRightChild.FindIntersections(intersections, line);
+            }
         }
     }
 
-    public void FindIntersections(List<LineSegment> intersections, float x)
+    public void FindIntersections(List<Vector3> intersections, float x)
     {
-        if (mEvent.Start.x < x)
+        if ((mEvent.Start.x > x) && (mEvent.End.x <= x))
         {
-            return;
+            float slope = (mEvent.End.y - mEvent.Start.y) /
+                            (mEvent.End.x - mEvent.Start.x);
+            float dx = x - mEvent.Start.x;
+            float y = mEvent.Start.y + dx * slope;
+            Vector3 v = new Vector3(x, y, 0);
+            intersections.Add(v);
         }
-        if (mEvent.End.x <= x)
+        if (mLeftChild != null)
         {
-            intersections.Add(mEvent.Line);
-        }
-        if (mRightChild != null)
-        {
-            mRightChild.FindIntersections(intersections, x);
+            mLeftChild.FindIntersections(intersections, x);
         }
         if (mRightChild != null)
         {

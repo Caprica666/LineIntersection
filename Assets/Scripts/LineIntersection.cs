@@ -1,11 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-using System.IO;
 using Random = UnityEngine.Random;
 using System.Collections;
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
-using System.ComponentModel;
 
 public class LineIntersection : MonoBehaviour
 {
@@ -17,10 +15,15 @@ public class LineIntersection : MonoBehaviour
 
     private LineGroup mLines;
     private LineMesh mLinesToRender;
+    private PointMesh mIntersections;
     private LineRenderer mCurLine = null;
 
     public void Awake()
     {
+        GameObject intersections = GameObject.Find("Intersections");
+        MeshFilter mf = intersections.GetComponent<MeshFilter>() as MeshFilter;
+        mIntersections = new PointMesh(mf.mesh);
+        mIntersections.PointSize = 0.2f;
         mLines = new LineGroup();
         mCurLine = gameObject.AddComponent<LineRenderer>() as LineRenderer;
         mCurLine.useWorldSpace = false;
@@ -67,15 +70,17 @@ public class LineIntersection : MonoBehaviour
         }
     }
 
-
     public IEnumerator FindIntersections(float x)
     {
         Stopwatch stopWatch = new Stopwatch();
-        stopWatch.Start();
+        List<Vector3> intersections = new List<Vector3>();
 
+        stopWatch.Start();
+        mLines.FindIntersections(intersections, x);
         stopWatch.Stop();
         ExecutionTime = (float) stopWatch.Elapsed.TotalSeconds;
         Debug.Log(string.Format("Execution Time = {0}", ExecutionTime));
+        mIntersections.MakeMesh(intersections);
         yield return new WaitForEndOfFrame();
     }
 

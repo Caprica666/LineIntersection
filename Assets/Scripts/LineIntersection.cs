@@ -70,13 +70,13 @@ public class LineIntersection : MonoBehaviour
         }
     }
 
-    public IEnumerator FindIntersections(float x)
+    public IEnumerator FindIntersections()
     {
         Stopwatch stopWatch = new Stopwatch();
-        List<Vector3> intersections = new List<Vector3>();
+        List<Vector3> intersections;
 
         stopWatch.Start();
-        mLines.FindIntersections(intersections, x);
+        intersections = mLines.FindIntersections();
         stopWatch.Stop();
         ExecutionTime = (float) stopWatch.Elapsed.TotalSeconds;
         Debug.Log(string.Format("Execution Time = {0}", ExecutionTime));

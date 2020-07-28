@@ -7,12 +7,7 @@ using UnityEngine.XR.WSA.Input;
 
 public class LineSegment
 {
-    public enum ClipResult
-    {
-        TOUCHING = 0,
-        INTERSECTING = 1,
-        NONINTERSECTING = -1
-    }
+    public const float EPSILON = 2e-6f;
 
     public LineSegment(Vector3 start, Vector3 end)
     {
@@ -44,45 +39,72 @@ public class LineSegment
     protected Vector3 mEnd;
     public int VertexIndex = 0;
 
-    /*
-     * Find the intersection point between two line segments
-     * @returns COINCIDENT lines are coincident
-     *         NONINTERSECTING if lines segments do not intersect
-     *         INTERSECTING if line segments intersect
-     */
     public int FindIntersection(LineSegment line2, ref Vector3 intersection)
     {
-        Vector3 A = End - Start; // s10
-        Vector3 B = line2.End - line2.Start; // s32
-        Vector3 C = Start - line2.Start; // s02
-        float f = A.x * B.y - A.y * B.x;  // denom
-        float e = A.x * C.y - A.y * C.x;  // snumer
-        float d = B.x * C.y - B.y * C.x;  // tnumer
+        Vector3 p1 = line2.Start;
+        Vector3 p2 = line2.End;
+        Vector3 p3 = Start;
+        Vector3 p4 = End;
+        Vector3 A = p2 - p1;
+        Vector3 B = p3 - p4;
+        Vector3 C = p1 - p3;
+        float f = A.y * B.x - A.x * B.y;
+        float e = A.x * C.y - A.y * C.x;
+        float d = B.y * C.x - B.x * C.y;
         bool denomPositive = (f > 0);
 
-        if (f == 0)
-        {
-            return (int) ClipResult.TOUCHING;
-        }
-        if ((e < 0) == denomPositive)
-        {
-            return (int) ClipResult.NONINTERSECTING;
-        }
-        if ((d < 0) == denomPositive)
-        {
-            return (int) ClipResult.NONINTERSECTING;
-        }
         // check to see if they are coincident
-        if ((d == 0) || (d == f))
+        if (Math.Abs(f) < EPSILON)
         {
-            return (int) ClipResult.TOUCHING;
+            if (Math.Abs(d) < EPSILON)
+            {
+                return -1;
+            }
+            return -1;
         }
-        if (((e > f) == denomPositive) || ((d > f) == denomPositive))
+        float t = d / f;
+        intersection = Start + (t * A);
+
+        if ((d == f) || (e == f))
         {
-            return (int) ClipResult.NONINTERSECTING;
+            return 0;
         }
-        d /= f;
-        intersection = Start + d * A;
-        return (int) ClipResult.INTERSECTING;
+        if ((d == 0) && (e == 0))
+        {
+            return 0;
+        }
+        if (f > 0)
+        {
+            if ((d < 0) || (d > f))
+            {
+                return 0;
+            }
+            if ((e < 0) || (e > f))
+            {
+                return -1;
+            }
+        }
+        else
+        {
+            if ((d > 0) || (d < f))
+            {
+                return 0;
+            }
+            if ((e > 0) || (e < f))
+            {
+                return -1;
+            }
+        }
+
+        Vector3 min1 = new Vector3(Math.Min(p1.x, p2.x), Math.Min(p1.y, p2.y));
+        Vector3 max1 = new Vector3(Math.Max(p1.x, p2.x), Math.Max(p1.y, p2.y));
+        Vector3 min2 = new Vector3(Math.Min(p3.x, p4.x), Math.Min(p3.y, p4.y));
+        Vector3 max2 = new Vector3(Math.Max(p3.x, p4.x), Math.Max(p3.y, p4.y));
+
+        if ((max1.x < min2.x) || (max2.x < min1.x))
+        {
+            return -1;
+        }
+        return 1;
     }
 }

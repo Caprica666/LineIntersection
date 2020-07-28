@@ -8,7 +8,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <RootNamespace></RootNamespace>
+    <RootNamespace>
+    </RootNamespace>
     <ProjectGuid>{25E24E9E-279B-26DA-27C3-5674E7EF6F06}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
@@ -68,8 +69,10 @@
     <Compile Include="Assets\Scripts\LineMesh.cs" />
     <Compile Include="Assets\Scripts\LineSegment.cs" />
     <Compile Include="Assets\Scripts\PointMesh.cs" />
+    <Compile Include="Assets\Scripts\XSelector.cs" />
     <None Include="Assets\VertexColorUnlit.shader" />
     <None Include="Assets\Scripts\VertexColorUnlit.shader" />
+    <None Include="packages.config" />
     <Reference Include="Unity.Timeline.Editor">
       <HintPath>D:/projects/unity/LineIntersection/Library/ScriptAssemblies/Unity.Timeline.Editor.dll</HintPath>
     </Reference>

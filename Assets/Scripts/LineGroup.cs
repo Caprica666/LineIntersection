@@ -1,9 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;;
-using System.Linq;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
-public class PlaneEvent
+public class PlaneEvent : IComparable
 {
     public static readonly int START = 1;
     public static readonly int END = 2;
@@ -13,6 +14,7 @@ public class PlaneEvent
     private int mType;
     private LineSegment mSegment;
     private Vector3 mPoint;
+    private int mVertexIndex = -1;
 
     public PlaneEvent(int type, Vector3 point, LineSegment segment)
     {
@@ -40,14 +42,20 @@ public class PlaneEvent
     {
         mType = type;
         mSegment = src.Line;
-        if (type == START)
-        {
-            mPoint = mSegment.Start;
-        }
-        else
+        if (type == END)
         {
             mPoint = mSegment.End;
         }
+        else
+        {
+            mPoint = mSegment.Start;
+        }
+    }
+
+    public int VertexIndex
+    {
+        get { return mVertexIndex; }
+        set { mVertexIndex = value; }
     }
 
     public int Type
@@ -88,17 +96,36 @@ public class PlaneEvent
     {
         return mSegment.FindIntersection(line2, ref intersection);
     }
+
+    public int CompareTo(object obj)
+    {
+        PlaneEvent p1 = this;
+        PlaneEvent p2 = obj as PlaneEvent;
+        float t = p1.Point.x - p2.Point.x;
+
+        if (t < 0)
+        {
+            return -1;
+        }
+        if (t > 0)
+        {
+            return 1;
+        }
+        t = p1.Point.y - p2.Point.y;
+        if (t < 0)
+        {
+            return 1;
+        }
+        if (t > 0)
+        {
+            return -1;
+        }
+        return p1.Type - p2.Type;
+    }
 }
 
-public class LineCompare : IComparer<PlaneEvent>
+public class EventCompare : IComparer<PlaneEvent>
 {
-    private float X;
-
-    public LineCompare(float x)
-    {
-        X = x;
-    }
-
     int IComparer<PlaneEvent>.Compare(PlaneEvent p1, PlaneEvent p2)
     {
         float t = p1.Point.x - p2.Point.x;
@@ -153,19 +180,19 @@ public class VecCompare : IComparer<Vector3>
 
 public class LineGroup
 {
-    private LineGroup mLeftChild = null;
-    private LineGroup mRightChild = null;
-    private PlaneEvent mEvent = null;
     private SortedSet<PlaneEvent> mEventQ;
     private SortedList<Vector3, Vector3> mVertices;
     private List<PlaneEvent> mStartEvents = new List<PlaneEvent>();
     private List<PlaneEvent> mEndEvents = new List<PlaneEvent>();
-    private List<PlaneEvent> mIsectEvents = new List<PlaneEvent>();
     private List<PlaneEvent> mCandidates = new List<PlaneEvent>();
     private List<Vector3> mIntersections;
+    private LineMesh mLineMesh = null;
+    private PointMesh mPointMesh = null;
 
-    public LineGroup()
+    public LineGroup(LineMesh lmesh = null, PointMesh pmesh = null)
     {
+        mLineMesh = lmesh;
+        mPointMesh = pmesh;
         mEventQ = new SortedSet<PlaneEvent>();
         mVertices = new SortedList<Vector3, Vector3>(new VecCompare());
     }
@@ -174,11 +201,14 @@ public class LineGroup
     {
         mEventQ = new SortedSet<PlaneEvent>();
         mVertices = new SortedList<Vector3, Vector3>(new VecCompare());
-    }
-
-    public void Add(LineSegment line)
-    {
-        Add(new PlaneEvent(PlaneEvent.START, line));
+        if (mLineMesh != null)
+        {
+            mLineMesh.Clear();
+        }
+        if (mPointMesh != null)
+        {
+            mPointMesh.Clear();
+        }
     }
 
     public void Add(PlaneEvent p)
@@ -186,23 +216,107 @@ public class LineGroup
         try
         {
             mEventQ.Add(p);
+            if (mLineMesh != null)
+            {
+                int vindex = p.VertexIndex;
+                if (vindex >= 0)
+                {
+                    mLineMesh.Update(vindex, p.Line);
+                }
+                else
+                {
+                    p.VertexIndex = mLineMesh.Add(p.Line);
+                }
+            }
         }
         catch (ArgumentException ex)
         {
-            Debug.LogWarning(String.Format("${0}, ${1] already added", p.Point.x, p.Point.y));
+            Debug.LogWarning(String.Format("${0}, ${1} already added ${2}",
+                                            p.Point.x, p.Point.y, ex.Message));
         }
     }
 
     public void AddLines(List<LineSegment> lines)
     {
-        foreach (LineSegment line in lines)
+        try
         {
-            PlaneEvent p = new PlaneEvent(PlaneEvent.START, line);
-            mVertices.Add(p.Start, p.Start);
-            mVertices.Add(p.End, p.End);
-            Add(p);
-            p = new PlaneEvent(PlaneEvent.END, line);
-            Add(p);
+            foreach (LineSegment line in lines)
+            {
+                PlaneEvent p1 = new PlaneEvent(PlaneEvent.START, line);
+                PlaneEvent p2 = new PlaneEvent(PlaneEvent.END, line);
+                mVertices.Add(p1.Start, p1.Start);
+                mVertices.Add(p1.End, p1.End);
+                mEventQ.Add(p1);
+                mEventQ.Add(p2);
+                if (mLineMesh != null)
+                {
+                    Color c = new Color(Random.value, Random.value, Random.value, 1);
+                    p1.VertexIndex = mLineMesh.Add(line, c);
+                    p2.VertexIndex = p1.VertexIndex;
+                }
+            }
+        }
+        catch (ArgumentException ex)
+        {
+            Debug.LogWarning(ex.Message);
+        }
+    }
+
+    public IEnumerator ShowIntersections()
+    {
+        mIntersections = new List<Vector3>();
+        Vector3 vmax = mVertices.Values[mVertices.Count - 1];
+        PlaneEvent leftNeighbor = null;
+        PlaneEvent prev = null;
+
+        while (mEventQ.Count > 0)
+        {
+            PlaneEvent p = mEventQ.Min;
+
+            if (p.Point == vmax)
+            {
+                if (p.Type == PlaneEvent.START)
+                {
+                    mStartEvents.Add(p);
+                    mCandidates.Add(p);
+                }
+                else if (p.Type == PlaneEvent.END)
+                {
+                    mEndEvents.Add(p);
+                }
+                else
+                {
+                    mCandidates.Add(p);
+                }
+            }
+            else
+            {
+                if (prev != null)
+                {
+                    Process(prev, leftNeighbor, p);
+                    Display();
+                    yield return new WaitForEndOfFrame();
+                    yield return new WaitForEndOfFrame();
+                    yield return new WaitForEndOfFrame();
+                    yield return new WaitForEndOfFrame();
+                }
+                leftNeighbor = prev;
+                prev = p;
+            }
+        }
+        Process(prev, leftNeighbor, null);
+        Display();
+    }
+
+    public void Display()
+    {
+        if (mLineMesh != null)
+        {
+            mLineMesh.Display();
+        }
+        if (mPointMesh != null)
+        {
+            mPointMesh.Display();
         }
     }
 
@@ -211,6 +325,7 @@ public class LineGroup
         mIntersections = new List<Vector3>();
         IEnumerator<PlaneEvent> iter = mEventQ.GetEnumerator();
         Vector3 vmax = mVertices.Values[mVertices.Count - 1];
+        PlaneEvent leftNeighbor = null;
         PlaneEvent prev = null;
 
         while (iter.MoveNext())
@@ -231,123 +346,110 @@ public class LineGroup
                 else
                 {
                     mCandidates.Add(p);
-                    mIsectEvents.Add(p);
                 }
             }
-            else if (prev != null)
+            else
             {
-                Process(prev);
-                mStartEvents.Clear();
-                mCandidates.Clear();
-                mEndEvents.Clear();
+                if (prev != null)
+                {
+                    Process(prev, leftNeighbor, p);
+                }
+                leftNeighbor = prev;
                 prev = p;
             }
         }
-        if (prev != null)
-        {
-            Process(prev);
-        }
+        Process(prev, leftNeighbor, null);
         return mIntersections;
     }
 
-    public void Process(PlaneEvent p)
+    public void Remove(List<PlaneEvent> events)
     {
-        int vindex = mVertices.IndexOfKey(p.Point);
+        foreach (PlaneEvent e in events)
+        {
+            mEventQ.Remove(e);
+            if (mLineMesh != null)
+            {
+                int vindex = e.Line.VertexIndex;
+                mLineMesh.Update(vindex, Color.black);
+            }
+        }
+    }
 
+    public void Remove(PlaneEvent e)
+    {
+        mEventQ.Remove(e);
+        if (mLineMesh != null)
+        {
+            int vindex = e.Line.VertexIndex;
+            mLineMesh.Update(vindex, Color.black);
+        }
+    }
+
+    public void Process(PlaneEvent p, PlaneEvent leftNeighbor, PlaneEvent rightNeighbor)
+    {
         if ((mCandidates.Count + mEndEvents.Count) > 1)
         {
-            mEventQ.Add(new PlaneEvent(PlaneEvent.INTERSECTION,
-                            new LineSegment(p.Point, p.End)));
             mIntersections.Add(p.Point);
+            if (mPointMesh != null)
+            {
+                mPointMesh.Add(p.Point);
+            }
         }
-        foreach (PlaneEvent e0 in mEndEvents)
-        {
-            mEventQ.Remove(e0);
-        }
-        foreach (PlaneEvent e0 in mIsectEvents)
-        {
-            mEventQ.Remove(e0);
-        }
-        SortedSet<PlaneEvent> left = FindLeftNeighbor(p, vindex);
-        SortedSet<PlaneEvent> right = FindRightNeighbor(p, vindex);
+        Remove(mEndEvents);
         Vector3 isect = new Vector3();
 
         if (mCandidates.Count > 0)
         {
-            foreach (PlaneEvent e1 in mCandidates)
-            {
-                mEventQ.Remove(e1);
-            }
             PlaneEvent e = mCandidates[0];
-            foreach (PlaneEvent e2 in left)
+            Remove(mCandidates);
+            if ((leftNeighbor != null) &&
+                (leftNeighbor.FindIntersection(e.Line, ref isect) > 0))
             {
-                if (e2.FindIntersection(e.Line, ref isect) > 0)
-                {
-                    mEventQ.Add(new PlaneEvent(PlaneEvent.INTERSECTION, isect,
-                                            new LineSegment(isect, e2.End)));
-                    mEventQ.Add(new PlaneEvent(PlaneEvent.INTERSECTION, isect,
-                                               new LineSegment(isect, e.End)));
-                    mIntersections.Add(p.Point);
-                }
+                Remove(leftNeighbor);
+                p = new PlaneEvent(PlaneEvent.INTERSECTION, isect,
+                                   new LineSegment(isect, leftNeighbor.End));
+                p.VertexIndex = leftNeighbor.VertexIndex;
+                Add(p);
+                p = new PlaneEvent(PlaneEvent.INTERSECTION, isect,
+                                   new LineSegment(isect, e.End));
+                p.VertexIndex = e.VertexIndex;
+                Add(p);
+                mIntersections.Add(p.Point);
             }
             e = mCandidates[mCandidates.Count - 1];
-            foreach (PlaneEvent e2 in right)
+            if ((rightNeighbor != null) &&
+                (rightNeighbor.FindIntersection(e.Line, ref isect) > 0))
             {
-                if (e2.FindIntersection(e.Line, ref isect) > 0)
-                {
-                    mEventQ.Add(new PlaneEvent(PlaneEvent.INTERSECTION, isect,
-                                               new LineSegment(isect, e2.End)));
-                    mEventQ.Add(new PlaneEvent(PlaneEvent.INTERSECTION, isect,
-                                               new LineSegment(isect, e.End)));
-                    mIntersections.Add(p.Point);
-                }
+                Remove(rightNeighbor);
+                p = new PlaneEvent(PlaneEvent.INTERSECTION, isect,
+                                   new LineSegment(isect, rightNeighbor.End));
+                p.VertexIndex = rightNeighbor.VertexIndex;
+                Add(p);
+                p = new PlaneEvent(PlaneEvent.INTERSECTION, isect,
+                                   new LineSegment(isect, e.End));
+                p.VertexIndex = e.VertexIndex;
+                Add(p);
+                mIntersections.Add(p.Point);
             }
         }
-        else
+        else if ((leftNeighbor != null) && (rightNeighbor != null))
         {
-            foreach (PlaneEvent e2 in left)
+            if (leftNeighbor.FindIntersection(rightNeighbor.Line, ref isect) > 0)
             {
-                foreach (PlaneEvent e3 in right)
-                {
-                    if (e2.FindIntersection(e3.Line, ref isect) > 0)
-                    {
-                        mEventQ.Add(new PlaneEvent(PlaneEvent.INTERSECTION, isect,
-                                                   new LineSegment(isect, e2.End)));
-                        mEventQ.Add(new PlaneEvent(PlaneEvent.INTERSECTION, isect,
-                                                   new LineSegment(isect, e3.End)));
-                        mIntersections.Add(p.Point);
-                    }
-                }
+                p = new PlaneEvent(PlaneEvent.INTERSECTION, isect,
+                                   new LineSegment(isect, leftNeighbor.End));
+                p.VertexIndex = leftNeighbor.VertexIndex;
+                Add(p);
+                p = new PlaneEvent(PlaneEvent.INTERSECTION, isect,
+                                   new LineSegment(isect, rightNeighbor.End));
+                p.VertexIndex = rightNeighbor.VertexIndex;
+                Add(p);
+                mIntersections.Add(p.Point);
             }
         }
+        mStartEvents.Clear();
+        mEndEvents.Clear();
+        mCandidates.Clear();
+        Remove(p);
     }
-
-    public SortedSet<PlaneEvent> FindLeftNeighbor(PlaneEvent p, int vindex)
-    {
-        if (vindex == 0)
-        {
-            return new SortedSet<PlaneEvent>();
-        }
-        Vector3 v1 = mVertices.Values[vindex - 1];
-        PlaneEvent p1 = new PlaneEvent(PlaneEvent.START,
-                                       new LineSegment(v1, v1));
-        PlaneEvent p2 = new PlaneEvent(PlaneEvent.INTERSECTION,
-                                       new LineSegment(v1, v1));
-        return mEventQ.GetViewBetween(p1, p2);
-    }
-
-    public SortedSet<PlaneEvent> FindRightNeighbor(PlaneEvent p, int vindex)
-    {
-        if (vindex >= (mEventQ.Count - 1))
-        {
-            return new SortedSet<PlaneEvent>();
-        }
-        Vector3 v1 = mVertices.Values[vindex + 1];
-        PlaneEvent p1 = new PlaneEvent(PlaneEvent.INTERSECTION,
-                                       new LineSegment(v1, v1));
-        PlaneEvent p2 = new PlaneEvent(PlaneEvent.END,
-                                       new LineSegment(v1, v1));
-        return mEventQ.GetViewBetween(p1, p2);
-    }
-
 }

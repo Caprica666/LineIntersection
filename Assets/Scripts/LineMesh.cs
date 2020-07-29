@@ -55,8 +55,14 @@ public class LineMesh
 
     public void Update(int index, Color c)
     {
-        mColors.Insert(index, c);
-        mColors.Insert(index + 1, c);
+        mColors[index] = c;
+        mColors[index + 1] = c;
+    }
+
+    public void Update(int index, LineSegment l)
+    {
+        mVertices[index] = l.Start;
+        mVertices[index + 1] = l.End;
     }
 
     public int Add(LineSegment l)

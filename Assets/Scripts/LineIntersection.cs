@@ -88,8 +88,8 @@ public class LineIntersection : MonoBehaviour
             x = Random.value - 0.5f;
             y = Random.value - 0.5f;
             Vector3 v2 = new Vector3(size * x, size * y, 0);
-            LineSegment l = new LineSegment(v1, v2);
-            lines.Add(l);
+
+            lines.Add(new LineSegment(v1, v2));
         }
         mLines.AddLines(lines);
         mLinesToRender.Display();

@@ -26,7 +26,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <NoWarn>0169</NoWarn>
-    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -35,7 +35,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <NoWarn>0169</NoWarn>
-    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
     <NoConfig>true</NoConfig>
@@ -63,13 +63,16 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\BitHelper.cs" />
     <Compile Include="Assets\Scripts\LineGroup.cs" />
     <Compile Include="Assets\Scripts\LineIntersection.cs" />
     <Compile Include="Assets\Scripts\LineMesh.cs" />
     <Compile Include="Assets\Scripts\LineSegment.cs" />
     <Compile Include="Assets\Scripts\PointMesh.cs" />
+    <Compile Include="Assets\Scripts\RBTree.cs" />
     <Compile Include="Assets\Scripts\XSelector.cs" />
     <None Include="Assets\VertexColorUnlit.shader" />
+    <None Include="Assets\csc.rsp" />
     <None Include="Assets\Scripts\VertexColorUnlit.shader" />
     <Reference Include="Unity.Timeline.Editor">
       <HintPath>D:/projects/unity/LineIntersection/Library/ScriptAssemblies/Unity.Timeline.Editor.dll</HintPath>

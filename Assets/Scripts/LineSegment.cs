@@ -13,7 +13,7 @@ public class LineSegment
     {
         mStart = start;
         mEnd = end;
-        if (mEnd.x > mStart.x)
+        if (mEnd.x < mStart.x)
         {
             mStart = end;
             mEnd = start;

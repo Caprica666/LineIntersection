@@ -4,7 +4,6 @@ using Random = UnityEngine.Random;
 
 public class LineMesh
 {
-    public int LineWidth = 10;
     private List<Vector3> mVertices;
     private List<Color> mColors;
     List<int> mIndices;
@@ -55,14 +54,24 @@ public class LineMesh
 
     public void Update(int index, Color c)
     {
+        if (c == Color.black)
+        {
+            c = mColors[index];
+            c = new Color(c.r, c.g, c.b, 0);
+        }
         mColors[index] = c;
         mColors[index + 1] = c;
     }
 
     public void Update(int index, LineSegment l)
     {
+        Color c = mColors[index];
+
+        c = new Color(c.r, c.g, c.b, 1);
         mVertices[index] = l.Start;
         mVertices[index + 1] = l.End;
+        mColors[index] = c;
+        mColors[index + 1] = c;       
     }
 
     public int Add(LineSegment l)

@@ -80,6 +80,7 @@ public class LineIntersection : MonoBehaviour
         float size = SCALE;
         List<LineSegment> lines = new List<LineSegment>(n);
         mLines.Clear();
+        mIntersections.Clear();
         for (int i = 0; i < n; i++)
         {
             float x = Random.value - 0.5f;

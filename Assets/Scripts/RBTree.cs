@@ -333,6 +333,11 @@ internal delegate bool TreeWalkPredicate<T>(RBTree<T>.Node node);
             }
         }
 
+        public int Version
+        {
+            get { return version; }
+        }
+
         public IComparer<T> Comparer
         {
             get
@@ -935,64 +940,70 @@ internal delegate bool TreeWalkPredicate<T>(RBTree<T>.Node node);
 
     public T FindPredecessor(T item)
     {
+        Stack<Node> stack = new Stack<Node>(2 * (int) RBTree<T>.log2(count + 1));
         Node current = root;
-        Node pred = null;
 
         while (current != null)
         {
             int order = comparer.Compare(item, current.Item);
+            stack.Push(current);
             if (order == 0)
             {
+                if (current.Left != null)
+                {
+                    return current.Left.Item;
+                }
                 break;
             }
-            if (order < 0)          // item < current
-            {
-                current = current.Left;
-            }
-            else                    // item > current
-            {
-                pred = current;
-                current = current.Right;
-            }
+            current = (order < 0) ? current.Left : current.Right;
         }
-        if (pred == null)
+        try
         {
-            if ((current == null) || (current.Left == null))
+            while ((current = stack.Pop()) != null)
             {
-                throw new ArgumentOutOfRangeException("predecessor not found");
+                int order = comparer.Compare(item, current.Item);
+                if (order > 0)
+                {
+                    return current.Item;
+                }
             }
-            pred = current.Left;
         }
-        return pred.Item;
-
+        catch (InvalidOperationException) { }
+        throw new ArgumentOutOfRangeException("No predecessor found");
     }
 
     public T FindSuccessor(T item)
     {
         Node current = root;
-        Node successor = null;
+        Stack<Node> stack = new Stack<Node>(2 * (int) RBTree<T>.log2(count + 1));
         while (current != null)
         {
             int order = comparer.Compare(item, current.Item);
+            stack.Push(current);
             if (order == 0)
             {
+                if (current.Right != null)
+                {
+                    return current.Right.Item;
+                }
                 break;
             }
-            if (order < 0)          // item < current
-            {
-                successor = current;
-                current = current.Left;
-            }
-            else                    // item > current
-            {
-                current = current.Right;
-            }
+            current = (order < 0) ? current.Left : current.Right;
         }
-        if (successor == null)
+        try
         {
-            throw new ArgumentOutOfRangeException("successor not found");
+            while ((current = stack.Pop()) != null)
+            {
+                int order = comparer.Compare(item, current.Item);
+                if (order < 0)
+                {
+                    return current.Item;
+                }
+            }
         }
-        return successor.Item;
+        catch (InvalidOperationException)  { }
+        throw new ArgumentOutOfRangeException("No successor found");
+
     }
 
     //used for bithelpers. Note that this implementation is completely different 
@@ -2565,7 +2576,7 @@ internal delegate bool TreeWalkPredicate<T>(RBTree<T>.Node node);
         #endregion
 
         #region Helper Classes
-        internal class Node
+        public class Node
         {
             public bool IsRed;
             public T Item;
@@ -2590,20 +2601,20 @@ internal delegate bool TreeWalkPredicate<T>(RBTree<T>.Node node);
         [SuppressMessage("Microsoft.Performance", "CA1815:OverrideEqualsAndOperatorEqualsOnValueTypes", Justification = "not an expected scenario")]
 #if !FEATURE_NETCORE
         [Serializable]
-        public struct Enumerator : IEnumerator<T>, IEnumerator, ISerializable, IDeserializationCallback
+        public class Enumerator : IEnumerator<T>, IEnumerator, ISerializable, IDeserializationCallback
         {
 #else
         public struct Enumerator : IEnumerator<T>, IEnumerator {
 #endif
-            private RBTree<T> tree;
-            private int version;
+            protected RBTree<T> tree;
+            protected int version;
 
 
-            private Stack<RBTree<T>.Node> stack;
-            private RBTree<T>.Node current;
+            protected Stack<RBTree<T>.Node> stack;
+            protected RBTree<T>.Node current;
             static RBTree<T>.Node dummyNode = new RBTree<T>.Node(default(T));
 
-            private bool reverse;
+            protected bool reverse;
 
 #if !FEATURE_NETCORE
             private SerializationInfo siInfo;
@@ -2710,7 +2721,7 @@ internal delegate bool TreeWalkPredicate<T>(RBTree<T>.Node node);
 #endif //!FEATURE_NETCORE
 
 
-            private void Intialize()
+            protected void Intialize()
             {
 
                 current = null;
@@ -2736,7 +2747,7 @@ internal delegate bool TreeWalkPredicate<T>(RBTree<T>.Node node);
                 }
             }
 
-            public bool MoveNext()
+            public virtual bool MoveNext()
             {
 
                 //this is a hack to make sure that the underlying subset has not been changed since
@@ -2815,7 +2826,7 @@ internal delegate bool TreeWalkPredicate<T>(RBTree<T>.Node node);
                 }
             }
 
-            internal void Reset()
+            public virtual void Reset()
             {
                 if (version != tree.version)
                 {

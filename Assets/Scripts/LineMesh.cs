@@ -74,9 +74,24 @@ public class LineMesh
         mColors[index + 1] = c;       
     }
 
+    public void Recolor()
+    {
+        for (int i = 0; i <= mColors.Count - 3; i += 3)
+        {
+            Color c = new Color(Random.value * 0.8f,
+                                Random.value * 0.8f,
+                                Random.value * 0.8f, 1);
+            mColors[i] = c;
+            mColors[i + 1] = c;
+            mColors[i + 2] = c;
+        }
+    }
+
     public int Add(LineSegment l)
     {
-        return Add(l, new Color(Random.value, Random.value, Random.value, 1));
+        return Add(l, new Color(Random.value * 0.8f,
+                                Random.value * 0.8f,
+                                Random.value * 0.8f, 1));
     }
 
 }

@@ -16,7 +16,7 @@ public class LineIntersection : MonoBehaviour
     private LineGroup mLines;
     private LineMesh mLinesToRender;
     private PointMesh mIntersections;
-    private LineRenderer mCurLine = null;
+    private List<LineSegment> mSaved = null;
 
     public void Awake()
     {
@@ -24,10 +24,6 @@ public class LineIntersection : MonoBehaviour
         MeshFilter mf = intersections.GetComponent<MeshFilter>() as MeshFilter;
         mIntersections = new PointMesh(mf.mesh);
         mIntersections.PointSize = 0.2f;
-        mCurLine = gameObject.AddComponent<LineRenderer>() as LineRenderer;
-        mCurLine.useWorldSpace = false;
-        mCurLine.widthMultiplier = 10;
-        mCurLine.material = new Material(Shader.Find("Unlit/VertexColorUnlit"));
         mLinesToRender = new LineMesh(gameObject.GetComponent<MeshFilter>().mesh);
         mLines = new LineGroup(mLinesToRender, mIntersections);
     }
@@ -42,6 +38,10 @@ public class LineIntersection : MonoBehaviour
         else if (PlaneSweep)
         {
             PlaneSweep = false;
+            Clear();
+            mLines.AddLines(mSaved);
+            mLinesToRender.Recolor();
+            mLinesToRender.Display();
             StartCoroutine(FindIntersections());
         }
     }
@@ -55,6 +55,7 @@ public class LineIntersection : MonoBehaviour
     public void Clear(bool clearmesh = false)
     {
         mLines.Clear();
+        mIntersections.Clear();
         if (clearmesh && (mLinesToRender != null))
         {
             mLinesToRender.Clear();
@@ -65,8 +66,12 @@ public class LineIntersection : MonoBehaviour
     {
 //        Stopwatch stopWatch = new Stopwatch();
         List<Vector3> intersections;
+        yield return new WaitForEndOfFrame();
+        yield return new WaitForEndOfFrame();
+        yield return new WaitForEndOfFrame();
+        yield return new WaitForEndOfFrame();
 
-//        stopWatch.Start();
+        //        stopWatch.Start();
         StartCoroutine(mLines.ShowIntersections());
 //        stopWatch.Stop();
 //        ExecutionTime = (float) stopWatch.Elapsed.TotalSeconds;
@@ -78,9 +83,8 @@ public class LineIntersection : MonoBehaviour
     public void NewLines(int n)
     {
         float size = SCALE;
-        List<LineSegment> lines = new List<LineSegment>(n);
-        mLines.Clear();
-        mIntersections.Clear();
+        mSaved = new List<LineSegment>(n);
+        Clear();
         for (int i = 0; i < n; i++)
         {
             float x = Random.value - 0.5f;
@@ -89,10 +93,9 @@ public class LineIntersection : MonoBehaviour
             x = Random.value - 0.5f;
             y = Random.value - 0.5f;
             Vector3 v2 = new Vector3(size * x, size * y, 0);
-
-            lines.Add(new LineSegment(v1, v2));
+            mSaved.Add(new LineSegment(v1, v2));
         }
-        mLines.AddLines(lines);
+        mLines.AddLines(mSaved);
         mLinesToRender.Display();
     }
 

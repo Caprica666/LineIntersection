@@ -63,7 +63,7 @@ public class LineSegment
             return -1;
         }
         float t = d / f;
-        intersection = Start + (t * A);
+        intersection = p1 + (t * A);
 
         if ((d == f) || (e == f))
         {

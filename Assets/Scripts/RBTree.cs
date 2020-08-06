@@ -764,11 +764,10 @@ internal delegate bool TreeWalkPredicate<T>(RBTree<T>.Node node);
                 }
         }
         }
+    #endregion
 
-        #endregion
-
-        #region IEnumerable<T> members
-        public Enumerator GetEnumerator()
+    #region IEnumerable<T> members
+    public Enumerator GetEnumerator()
         {
             return new Enumerator(this);
         }
@@ -2596,7 +2595,23 @@ internal delegate bool TreeWalkPredicate<T>(RBTree<T>.Node node);
                 this.Item = item;
                 this.IsRed = isRed;
             }
+
+        public override string ToString()
+        {
+            String s = "";
+
+            if (Left != null)
+            {
+                s += Left.ToString();
+            }
+            s += Item.ToString() + '\n';
+            if (Right != null)
+            {
+                s += Right.ToString();
+            }
+            return s;
         }
+    }
 
         [SuppressMessage("Microsoft.Performance", "CA1815:OverrideEqualsAndOperatorEqualsOnValueTypes", Justification = "not an expected scenario")]
 #if !FEATURE_NETCORE
@@ -2720,8 +2735,12 @@ internal delegate bool TreeWalkPredicate<T>(RBTree<T>.Node node);
             }
 #endif //!FEATURE_NETCORE
 
+            protected RBTree<T>.Node Root
+            {
+                get { return tree.root; }
+            }
 
-            protected void Intialize()
+            protected virtual void Intialize()
             {
 
                 current = null;

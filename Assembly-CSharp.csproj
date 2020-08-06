@@ -64,6 +64,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\BitHelper.cs" />
+    <Compile Include="Assets\Scripts\LineEnumerator.cs" />
     <Compile Include="Assets\Scripts\LineGroup.cs" />
     <Compile Include="Assets\Scripts\LineIntersection.cs" />
     <Compile Include="Assets\Scripts\LineMesh.cs" />

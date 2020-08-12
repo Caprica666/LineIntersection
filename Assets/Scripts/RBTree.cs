@@ -2598,18 +2598,7 @@ internal delegate bool TreeWalkPredicate<T>(RBTree<T>.Node node);
 
         public override string ToString()
         {
-            String s = "";
-
-            if (Left != null)
-            {
-                s += Left.ToString();
-            }
-            s += Item.ToString() + '\n';
-            if (Right != null)
-            {
-                s += Right.ToString();
-            }
-            return s;
+            return Item.ToString();
         }
     }
 

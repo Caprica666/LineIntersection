@@ -65,7 +65,6 @@ public class LineIntersection : MonoBehaviour
     public IEnumerator FindIntersections()
     {
 //        Stopwatch stopWatch = new Stopwatch();
-        List<Vector3> intersections;
         yield return new WaitForEndOfFrame();
         yield return new WaitForEndOfFrame();
         yield return new WaitForEndOfFrame();

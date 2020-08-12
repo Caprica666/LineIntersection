@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using UnityEditor;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 public class LineEnumerator : RBTree<PlaneEvent>.Enumerator
 {
@@ -66,6 +62,22 @@ public class LineEnumerator : RBTree<PlaneEvent>.Enumerator
         return MoveAfterPoint(mCurrentPoint);
     }
 
+    public bool MoveRight()
+    {
+        current = stack.Pop();
+        if (current.Right != null)
+        {
+            current = current.Right;
+            return true;
+        }
+        if (stack.Count > 1)
+        {
+            current = stack.Peek();
+            return true;
+        }
+        return false;
+    }
+
     public bool MoveAfterPoint(Vector3 P)
     {
         VecCompare vcomparer = new VecCompare();
@@ -74,44 +86,43 @@ public class LineEnumerator : RBTree<PlaneEvent>.Enumerator
         stack.Clear();
         stack.Push(Root);
         mLeftNeighbor = null;
+
+        current = Root;
         while (stack.Count > 0)
         {
-            current = stack.Peek();
+
             order = vcomparer.Compare(Current.Point, P);
-            /*
-             * If the current point is <= P,
-             * and the previous point was > P, the previous
-             * point is our the smallest node > P
-             */
+            // P > current node, move right or stop
             if (order <= 0)
             {
                 stack.Pop();
                 mLeftNeighbor = Current;
-                if ((prevorder > 0) ||
-                    (current.Right == null))
+                if (current.Right != null)
                 {
-                    return MoveNext();
+                    // move right
+                    current = current.Right;
+                    stack.Push(current);
+                    prevorder = order;
                 }
                 else
                 {
-                    prevorder = order;
-                    stack.Push(current.Right);
+                    prevorder = 0;
+                    current = stack.Peek();
                 }
             }
-            /*
-             * If the current point is > P and the previous
-             * point is <= P, we found the smallest node > P
-             */
+            // P < current node, move left or move next
             else
             {
-                if (current.Left == null)
+                if ((prevorder == 0) ||
+                    (current.Left == null))
                 {
                     return MoveNext();
                 }
                 else
                 {
+                    current = current.Left;
+                    stack.Push(current);
                     prevorder = order;
-                    stack.Push(current.Left);
                 }
             }
         }

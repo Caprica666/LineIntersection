@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Transactions;
-using UnityEditor;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -185,26 +184,18 @@ public class VecCompare : Comparer<Vector3>
     {
         float t = v1.x - v2.x;
 
-        if (t < -2e-7)
+        if (Math.Abs(t) > 2e-7)
         {
-            return -1;
-        }
-        if (t > 2e-7)
-        {
-            return 1;
+            return (t > 0) ? 1 : -1;
         }
         t = v1.y - v2.y;
-        if (t < -2e-7)
+        if (Math.Abs(t) > 2e-7)
         {
-            return 1;
-        }
-        if (t > 2e-7)
-        {
-            return -1;
+            return (t > 0) ? 1 : -1;
         }
         return 0;
     }
-};
+}
 
 public class LineGroup
 {
@@ -392,6 +383,7 @@ public class LineGroup
         PlaneEvent rightNeighbor = iter.RightNeighbor;
         List<PlaneEvent> collected = iter.Collected;
         List<PlaneEvent> intersections = new List<PlaneEvent>(collected);
+        VecCompare vc = new VecCompare();
 
         Debug.Log(String.Format("Collected {0} segments at {1}, Right neighbor = {2}",
                 lines.Count, iter.CurrentPoint,
@@ -421,19 +413,22 @@ public class LineGroup
         {
             LineSegment l = lines[0];
             if ((leftNeighbor != null) &&
-                (leftNeighbor.FindIntersection(l, ref isect) > 0))
+                (leftNeighbor.FindIntersection(l, ref isect) > 0) &&
+                (vc.Compare(isect, iter.CurrentPoint) != 0))
             {
                 PlaneEvent p1 = new PlaneEvent(PlaneEvent.INTERSECTION, isect,
                                              leftNeighbor.Line);
                 PlaneEvent p2 = new PlaneEvent(PlaneEvent.INTERSECTION, isect,
                                             l);
                 p1.VertexIndex = leftNeighbor.VertexIndex;
+
                 intersections.Add(p1);
                 intersections.Add(p2);
             }
             l = lines[lines.Count - 1];
             if ((rightNeighbor != null) &&
-                (rightNeighbor.FindIntersection(l, ref isect) > 0))
+                (rightNeighbor.FindIntersection(l, ref isect) > 0) &&
+                (vc.Compare(isect, iter.CurrentPoint) != 0))
             {
                 PlaneEvent p1 = new PlaneEvent(PlaneEvent.INTERSECTION, isect,
                                              rightNeighbor.Line);
@@ -445,7 +440,8 @@ public class LineGroup
         }
         else if ((leftNeighbor != null) && (rightNeighbor != null))
         {
-            if (leftNeighbor.FindIntersection(rightNeighbor.Line, ref isect) > 0)
+            if ((leftNeighbor.FindIntersection(rightNeighbor.Line, ref isect) > 0) &&
+                (vc.Compare(isect, iter.CurrentPoint) != 0))
             {
                 PlaneEvent p1 = new PlaneEvent(PlaneEvent.INTERSECTION, isect,
                                               leftNeighbor.Line);

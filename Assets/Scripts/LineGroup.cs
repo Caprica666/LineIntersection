@@ -23,6 +23,7 @@ public class PlaneEvent
         mType = type;
         mPoint = point;
         mSegment = segment;
+        segment.Users.Add(this);
     }
 
     public PlaneEvent(int type, LineSegment segment)
@@ -38,6 +39,7 @@ public class PlaneEvent
         {
             mPoint = segment.Start;
         }
+        segment.Users.Add(this);
     }
 
     public override string ToString()
@@ -327,7 +329,7 @@ public class LineGroup
         return mIntersections;
     }
 
-    public bool Remove(List<PlaneEvent> events, bool removeLinks = false)
+    public bool Remove(List<PlaneEvent> events, bool updateMesh = false)
     {
         if (events.Count == 0)
         {
@@ -335,9 +337,17 @@ public class LineGroup
         }
         foreach (PlaneEvent e in events)
         {
-            Remove(e, removeLinks);
+            Remove(e, updateMesh);
         }
         return true;
+    }
+
+    public void Remove(LineSegment segment)
+    {
+        foreach (PlaneEvent p in segment.Users)
+        {
+            Remove(p, true);
+        }
     }
 
     public bool Add(List<PlaneEvent> events)
@@ -362,7 +372,7 @@ public class LineGroup
             if (mLineMesh != null)
             {
                 int vindex = e.Line.VertexIndex;
-                mLineMesh.Update(vindex, Color.white);
+                mLineMesh.Update(vindex, Color.red);
             }
             if ((e.Type == PlaneEvent.INTERSECTION) &&
                 (mPointMesh != null))
@@ -379,17 +389,9 @@ public class LineGroup
     public bool Process(LineEnumerator iter)
     {
         List<LineSegment> lines = iter.CollectAtPoint();
-        PlaneEvent leftNeighbor = iter.LeftNeighbor;
-        PlaneEvent rightNeighbor = iter.RightNeighbor;
         List<PlaneEvent> collected = iter.Collected;
-        List<PlaneEvent> intersections = new List<PlaneEvent>(collected);
         VecCompare vc = new VecCompare();
 
-        Debug.Log(String.Format("Collected {0} segments at {1}, Right neighbor = {2}",
-                lines.Count, iter.CurrentPoint,
-                (rightNeighbor != null) ? rightNeighbor.ToString() : "none"));
-
-        mCompareEvents.CurrentX = iter.CurrentPoint.x;
         if (lines.Count > 1)
         {
             mIntersections.Add(iter.CurrentPoint);
@@ -409,6 +411,26 @@ public class LineGroup
                 --i;
             }
         }
+        for (int i = 0; i < collected.Count; ++i)
+        {
+            PlaneEvent e = collected[i];
+
+            if (e.Line.End == iter.CurrentPoint)
+            {
+                Remove(e.Line);
+                collected.Remove(e);
+            }
+            else
+            {
+                Remove(e, false);
+            }
+        }
+        mCompareEvents.CurrentX = iter.CurrentPoint.x;
+        Add(collected);
+        iter.Reset();
+
+        PlaneEvent leftNeighbor = iter.FindLeftNeighbor(iter.CurrentPoint);
+        PlaneEvent rightNeighbor = iter.FindRightNeighbor(iter.CurrentPoint);
         if (lines.Count > 0)
         {
             LineSegment l = lines[0];
@@ -422,8 +444,8 @@ public class LineGroup
                                             l);
                 p1.VertexIndex = leftNeighbor.VertexIndex;
 
-                intersections.Add(p1);
-                intersections.Add(p2);
+                Add(p1);
+                Add(p2);
             }
             l = lines[lines.Count - 1];
             if ((rightNeighbor != null) &&
@@ -434,8 +456,8 @@ public class LineGroup
                                              rightNeighbor.Line);
                 PlaneEvent p2 = new PlaneEvent(PlaneEvent.INTERSECTION, isect,
                                             l);
-                intersections.Add(p1);
-                intersections.Add(p2);
+                Add(p1);
+                Add(p2);
             }
         }
         else if ((leftNeighbor != null) && (rightNeighbor != null))
@@ -449,25 +471,10 @@ public class LineGroup
                                                rightNeighbor.Line);
                 p1.VertexIndex = leftNeighbor.VertexIndex;
                 p2.VertexIndex = rightNeighbor.VertexIndex;
-                intersections.Add(p1);
-                intersections.Add(p2);
+                Add(p1);
+                Add(p2);
             }
         }
-        for (int i = 0; i < collected.Count; ++i)
-        {
-            PlaneEvent e = collected[i];
-
-            if (e.Line.End == iter.CurrentPoint)
-            {
-                Remove(e, true);
-                intersections.Remove(e);
-            }
-            else
-            {
-                Remove(e, false);
-            }
-        }
-        Add(intersections);
         iter.Reset();
         return iter.MoveNextPoint();
     }

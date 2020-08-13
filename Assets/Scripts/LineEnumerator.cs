@@ -59,26 +59,10 @@ public class LineEnumerator : RBTree<PlaneEvent>.Enumerator
     {
         mRightNeighbor = null;
         mCollected.Clear();
-        return MoveAfterPoint(mCurrentPoint);
+        return (FindRightNeighbor(mCurrentPoint) != null);
     }
 
-    public bool MoveRight()
-    {
-        current = stack.Pop();
-        if (current.Right != null)
-        {
-            current = current.Right;
-            return true;
-        }
-        if (stack.Count > 1)
-        {
-            current = stack.Peek();
-            return true;
-        }
-        return false;
-    }
-
-    public bool MoveAfterPoint(Vector3 P)
+    public PlaneEvent FindRightNeighbor(Vector3 P)
     {
         VecCompare vcomparer = new VecCompare();
         int order = 0, prevorder = -1;
@@ -90,7 +74,6 @@ public class LineEnumerator : RBTree<PlaneEvent>.Enumerator
         current = Root;
         while (stack.Count > 0)
         {
-
             order = vcomparer.Compare(Current.Point, P);
             // P > current node, move right or stop
             if (order <= 0)
@@ -116,7 +99,11 @@ public class LineEnumerator : RBTree<PlaneEvent>.Enumerator
                 if ((prevorder == 0) ||
                     (current.Left == null))
                 {
-                    return MoveNext();
+                    if (MoveNext())
+                    {
+                        return Current;
+                    }
+                    return null;
                 }
                 else
                 {
@@ -126,8 +113,85 @@ public class LineEnumerator : RBTree<PlaneEvent>.Enumerator
                 }
             }
         }
-        return false;
+        return null;
      }
+
+    public PlaneEvent FindLeftNeighbor(Vector3 P)
+    {
+        VecCompare vcomparer = new VecCompare();
+        int order = 0, prevorder = -1;
+
+        stack.Clear();
+        stack.Push(Root);
+        mLeftNeighbor = null;
+
+        current = Root;
+        while (stack.Count > 0)
+        {
+            order = vcomparer.Compare(Current.Point, P);
+            // P > current node, move right or next
+            if (order < 0)
+            {
+                if ((prevorder == 0) ||
+                    (current.Right == null))
+                {
+                    if (MovePrev())
+                    {
+                        return Current;
+                    }
+                    return null;
+                }
+                else
+                {
+                    current = current.Right;
+                    stack.Push(current);
+                    prevorder = order;
+                }
+            }
+            // P <= current node, move left or move next
+            else
+            {
+                stack.Pop();
+                if (current.Left != null)
+                {
+                    // move left
+                    current = current.Left;
+                    stack.Push(current);
+                    prevorder = order;
+                }
+                else
+                {
+                    prevorder = 0;
+                    if (stack.Count > 0)
+                    {
+                        current = stack.Peek();
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    public virtual bool MovePrev()
+    {
+        if (stack.Count == 0)
+        {
+            current = null;
+            return false;
+        }
+        current = stack.Pop();
+        RBTree<PlaneEvent>.Node node = current.Left;
+        while (node != null)
+        {
+            stack.Push(node.Right);
+            node = node.Right;
+        }
+        return true;
+    }
 
     public List<LineSegment> AddFirst(PlaneEvent p)
     {

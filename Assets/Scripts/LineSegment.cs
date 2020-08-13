@@ -1,4 +1,5 @@
 ﻿using System;
+using Boo.Lang;
 using UnityEngine;
 
 public class LineSegment
@@ -34,6 +35,7 @@ public class LineSegment
     protected Vector3 mStart;
     protected Vector3 mEnd;
     public int VertexIndex = 0;
+    public List<PlaneEvent> Users = new List<PlaneEvent>();
 
     public int FindIntersection(LineSegment line2, ref Vector3 intersection)
     {

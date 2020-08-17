@@ -12,6 +12,7 @@ public class LineIntersection : MonoBehaviour
     public float ExecutionTime;
     public bool New;
     public bool PlaneSweep;
+    public bool Test;
 
     private LineGroup mLines;
     private LineMesh mLinesToRender;
@@ -39,6 +40,20 @@ public class LineIntersection : MonoBehaviour
         {
             PlaneSweep = false;
             Clear();
+            mLines.AddLines(mSaved);
+            mLinesToRender.Recolor();
+            mLinesToRender.Display();
+            StartCoroutine(FindIntersections());
+        }
+        else if (Test)
+        {
+            Test = false;
+            Clear();
+            mSaved = new List<LineSegment>();
+            mSaved.Add(new LineSegment(new Vector3(1.0f, 3.5f, 0), new Vector3(2.6f, -1.6f, 0)));
+            mSaved.Add(new LineSegment(new Vector3(-0.4f, -1.5f, 0), new Vector3(-4.1f, -4.7f, 0)));
+            mSaved.Add(new LineSegment(new Vector3(0.6f, -4.5f, 0), new Vector3(4.9f, -0.8f, 0)));
+            mSaved.Add(new LineSegment(new Vector3(-3.9f, -2.1f, 0), new Vector3(3.4f, 2.6f, 0)));
             mLines.AddLines(mSaved);
             mLinesToRender.Recolor();
             mLinesToRender.Display();

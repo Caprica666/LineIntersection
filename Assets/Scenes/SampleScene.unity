@@ -157,6 +157,7 @@ MonoBehaviour:
   ExecutionTime: 0
   New: 0
   PlaneSweep: 0
+  Test: 0
 --- !u!23 &468822347
 MeshRenderer:
   m_ObjectHideFlags: 0

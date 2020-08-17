@@ -491,6 +491,10 @@ public class LineGroup
                 RemoveUsers(p);
                 Add(p1);
                 Add(p2);
+                if ((isect.x > currentPoint.x) && (isect.x < rightNeighbor.Point.x))
+                {
+                    rightNeighbor = p1;
+                }
             }
         }
         else 
@@ -509,17 +513,10 @@ public class LineGroup
                 RemoveUsers(leftNeighbor);
                 Add(p1);
                 Add(p2);
-            }
-        }
-        if (mLineMesh != null)
-        {
-            if (leftNeighbor != null)
-            {
-                mLineMesh.Update(leftNeighbor.Line.VertexIndex, Color.green);
-            }
-            if (rightNeighbor != null)
-            {
-                mLineMesh.Update(rightNeighbor.Line.VertexIndex, Color.red);
+                if ((isect.x > currentPoint.x) && (isect.x < rightNeighbor.Point.x))
+                {
+                    rightNeighbor = p2;
+                }
             }
         }
         if (rightNeighbor == null)

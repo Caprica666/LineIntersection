@@ -54,11 +54,12 @@ public class LineMesh
 
     public void Update(int index, Color c)
     {
-        if (c == Color.black)
+ /*       if (c == Color.black)
         {
             c = mColors[index];
             c = new Color(c.r, c.g, c.b, 0);
         }
+        */
         mColors[index] = c;
         mColors[index + 1] = c;
     }

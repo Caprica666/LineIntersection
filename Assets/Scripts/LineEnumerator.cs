@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class LineEnumerator : RBTree<PlaneEvent>.Enumerator
+public class LineEnumerator : RBTree<LineEvent>.Enumerator
 {
     private Vector3 mCurrentPoint;
 
     public LineEnumerator(LineGroup lines)
     : base(lines.Events)
     {
-        RBTree<PlaneEvent>.Node node = stack.Peek();
+        RBTree<LineEvent>.Node node = stack.Peek();
         mCurrentPoint = node.Item.Point;
     }
 
@@ -32,7 +32,7 @@ public class LineEnumerator : RBTree<PlaneEvent>.Enumerator
         return (FindRightNeighbor(mCurrentPoint) != null);
     }
 
-    public PlaneEvent FindRightNeighbor(Vector3 P)
+    public LineEvent FindRightNeighbor(Vector3 P)
     {
         VecCompare vcomparer = new VecCompare();
         int order;
@@ -45,16 +45,21 @@ public class LineEnumerator : RBTree<PlaneEvent>.Enumerator
         {
             current = stack.Peek();
             order = vcomparer.Compare(Current.Point, P);
+
             // P > current node, move right or stop
             if (order < 0)
             {
+                stack.Pop();
                 if (current.Right != null)
                 {
-                    current = current.Right;
-                    stack.Push(current);
+                    stack.Push(current.Right);
                 }
                 else
                 {
+                    if (MoveNext())
+                    {
+                        return Current;
+                    }
                     break;
                 }
             }
@@ -63,92 +68,28 @@ public class LineEnumerator : RBTree<PlaneEvent>.Enumerator
             {
                 if (current.Left != null)
                 {
-                    current = current.Left;
-                    stack.Push(current);
+                    stack.Push(current.Left);
                 }
                 else
                 {
+                    MoveNext();
                     return Current;
                 }
             }
-            else
+            else // P == current point
             {
-                break;
-            }
-        }
-        while (MoveNext())
-        {
-            current = stack.Peek();
-            order = vcomparer.Compare(Current.Point, P);
-            if (order > 0)
-            {
-                return Current;
-            }
-        }
-        return null;
-    }
-
-    public PlaneEvent FindRightNeighbor(PlaneEvent p)
-    {
-        VecCompare vcomparer = new VecCompare();
-        int order;
-
-        if (p == null)
-        {
-            return null;
-        }
-        Reset();
-        stack.Clear();
-        stack.Push(Root);
-        current = Root;
-        while (stack.Count > 0)
-        {
-            current = stack.Peek();
-            order = vcomparer.Compare(Current.Point, p.Point);
-            // P > current node, move right or stop
-            if (order < 0)
-            {
-                if (current.Right != null)
-                {
-                    current = current.Right;
-                    stack.Push(current);
-                }
-                else
-                {
-                    break;
-                }
-            }
-            // P < current node, move left or move next
-            else if (order > 0)
-            {
-                if (current.Left != null)
-                {
-                    current = current.Left;
-                    stack.Push(current);
-                }
-                else
+                MoveNext();
+                if (MoveNext())
                 {
                     return Current;
                 }
-            }
-            else
-            {
                 break;
-            }
-        }
-        while (MoveNext())
-        {
-            current = stack.Peek();
-            order = vcomparer.Compare(Current.Point, p.Point);
-            if ((order > 0) && (Current.Line != p.Line))
-            {
-                return Current;
             }
         }
         return null;
     }
 
-    public PlaneEvent FindLeftNeighbor(Vector3 P)
+    public LineEvent FindLeftNeighbor(Vector3 P)
     {
         VecCompare vcomparer = new VecCompare();
         int order;
@@ -161,110 +102,53 @@ public class LineEnumerator : RBTree<PlaneEvent>.Enumerator
         {
             current = stack.Peek();
             order = vcomparer.Compare(Current.Point, P);
-            // P > current node, move right or stop
+            // P >= current node, move right or stop
             if (order < 0)
             {
                 if (current.Right != null)
                 {
-                    current = current.Right;
-                    stack.Push(current);
+                    stack.Push(current.Right);
                 }
                 else
                 {
+                    if (MovePrev())
+                    {
+                        return Current;
+                    }
                     break;
                 }
             }
-            // P < current node, move left or move next
+            // P < current node, move left or move prev
             else if (order > 0)
             {
+                stack.Pop();
                 if (current.Left != null)
                 {
-                    current = current.Left;
-                    stack.Push(current);
+                    stack.Push(current.Left);
                 }
                 else
                 {
+                    if (MovePrev())
+                    {
+                        return Current;
+                    }
                     break;
                 }
             }
-            else
+            else // P == current point
             {
+                MovePrev();
+                if (MovePrev())
+                {
+                    return Current;
+                }
                 break;
-            }
-        }
-        while (MovePrev())
-        {
-            current = stack.Peek();
-            order = vcomparer.Compare(Current.Point, P);
-            if (order < 0)
-            {
-                return Current;
             }
         }
         return null;
     }
 
-    public PlaneEvent FindLeftNeighbor(PlaneEvent p)
-    {
-        VecCompare vcomparer = new VecCompare();
-        int order;
-
-        if (p == null)
-        {
-            return null;
-        }
-        Reset();
-        stack.Clear();
-        stack.Push(Root);
-        current = Root;
-        while (stack.Count > 0)
-        {
-            current = stack.Peek();
-            order = vcomparer.Compare(Current.Point, p.Point);
-            // P > current node, move left or stop
-            if (order < 0)
-            {
-                if (current.Right != null)
-                {
-                    current = current.Right;
-                    stack.Push(current);
-                }
-                else
-                {
-                    break;
-                }
-            }
-            // P < current node, move left or move next
-            else if (order > 0)
-            {
-                if (current.Left != null)
-                {
-                    current = current.Left;
-                    stack.Push(current);
-                }
-                else
-                {
-                    break;
-                }
-            }
-            else
-            {
-                break;
-            }
-        }
-        while (MovePrev())
-        {
-            order = vcomparer.Compare(Current.Point, p.Point);
-            if ((order < 0) && (Current.Line != p.Line))
-            {
-                return Current;
-            }
-        }
-        return null;
-    }
-
-
-    public RBTree<PlaneEvent>.Node MoveToPoint(Vector3 P)
+    public RBTree<LineEvent>.Node MoveToPoint(Vector3 P)
     {
         VecCompare vcomparer = new VecCompare();
         int order;
@@ -286,7 +170,7 @@ public class LineEnumerator : RBTree<PlaneEvent>.Enumerator
                 }
                 else
                 {
-                    return null;
+                    break;
                 }
             }
             // P <= current node, move left
@@ -318,60 +202,35 @@ public class LineEnumerator : RBTree<PlaneEvent>.Enumerator
             return false;
         }
         current = stack.Pop();
-        RBTree<PlaneEvent>.Node node = current.Left;
-        while (node != null)
+        RBTree<LineEvent>.Node node = current.Left;
+        if (node != null)
         {
             stack.Push(node);
             node = node.Right;
+            while (node != null)
+            {
+                stack.Push(node);
+                node = node.Right;
+            }
         }
         return true;
     }
 
-    public List<PlaneEvent> CollectAtPoint()
+    public LineEvent CollectAtPoint()
     {
-        RBTree<PlaneEvent>.Node pointRoot = MoveToPoint(mCurrentPoint);
+        RBTree<LineEvent>.Node pointRoot = MoveToPoint(mCurrentPoint);
 
         if (pointRoot == null)
         {
             return null;
         }
-        List<PlaneEvent> collected = new List<PlaneEvent>();
-        Stack<RBTree<PlaneEvent>.Node> s = new Stack<RBTree<PlaneEvent>.Node>(stack.Reverse());
-        VecCompare vcomparer = new VecCompare();
-
-        while (MovePrev())
-        {
-            int order = vcomparer.Compare(mCurrentPoint, Current.Point);
-            if (order == 0)
-            {
-                collected.Add(Current);
-            }
-            else
-            {
-                break;
-            }
-        }
-        stack = s;
-        MoveNext();
-        while (MoveNext())
-        {
-            int order = vcomparer.Compare(mCurrentPoint, Current.Point);
-            if (order == 0)
-            {
-                collected.Add(Current);
-            }
-            else
-            {
-                break;
-            }
-        }
-        return collected;
+        return pointRoot.Item;
     }
 
     public override string ToString()
     {
         String s = "";
-        foreach (RBTree<PlaneEvent>.Node n in stack)
+        foreach (RBTree<LineEvent>.Node n in stack)
         {
             s += n.Item.ToString() + '\n';
         }

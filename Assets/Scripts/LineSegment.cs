@@ -34,8 +34,22 @@ public class LineSegment
 
     protected Vector3 mStart;
     protected Vector3 mEnd;
-    public int VertexIndex = 0;
-    public List<PlaneEvent> Users = new List<PlaneEvent>();
+    public int VertexIndex = -1;
+    public List<LineEvent> Users = new List<LineEvent>();
+
+
+    public void AddUser(LineEvent e)
+    {
+        if (!Users.Contains(e))
+        {
+            Users.Add(e);
+        }
+    }
+
+    public void RemoveUser(LineEvent e)
+    {
+        Users.Remove(e);
+    }
 
     public int FindIntersection(LineSegment line2, ref Vector3 intersection)
     {

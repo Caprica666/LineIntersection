@@ -40,15 +40,54 @@ public class LineSegment
 
     public void AddUser(LineEvent e)
     {
-        if (!Users.Contains(e))
+        for (int i = 0; i < Users.Count; ++i)
         {
-            Users.Add(e);
+            LineEvent u = Users[i];
+
+            if ((u == e) ||
+                (u.Point == e.Point))
+            {
+                return;
+            }
+            if (u.Point.x > e.Point.x)
+            {
+                Users.Insert(i, e);
+                return;
+            }
         }
+        Users.Add(e);
     }
 
     public void RemoveUser(LineEvent e)
     {
         Users.Remove(e);
+    }
+
+    public void RemoveUsers(float x)
+    {
+        for (int i = 0; i < Users.Count; ++i)
+        {
+            if (Users[i].Point.x > x)
+            {
+                break;
+            }
+            Users.RemoveAt(i);
+            --i;
+        }
+    }
+
+    public LineEvent FindUser(float x)
+    {
+        LineEvent le = Users[0];
+        for (int i = 1; i < Users.Count; ++i)
+        {
+            if (Users[i].Point.x > x)
+            {
+                break;
+            }
+            le = Users[i];
+        }
+        return le;
     }
 
     public int FindIntersection(LineSegment line2, ref Vector3 intersection)
@@ -118,5 +157,10 @@ public class LineSegment
             return -1;
         }
         return 1;
+    }
+
+    public override string ToString()
+    {
+        return Start + " -> " + End;
     }
 }

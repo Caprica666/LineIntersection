@@ -3,21 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class LineEnumerator : RBTree<LineEvent>.Enumerator
+public class LineEnumerator : RBTree<LineSegment>.Enumerator
 {
-    private Vector3 mCurrentPoint;
-
     public LineEnumerator(LineGroup lines)
-    : base(lines.Events)
+    : base(lines.ActiveLines)
     {
-        RBTree<LineEvent>.Node node = stack.Peek();
-        mCurrentPoint = node.Item.Point;
-    }
-
-    public Vector3 CurrentPoint
-    {
-        get { return mCurrentPoint; }
-        set { mCurrentPoint = value; }
     }
 
     public override void Reset()
@@ -27,16 +17,15 @@ public class LineEnumerator : RBTree<LineEvent>.Enumerator
         version = tree.Version;
     }
 
-    public bool MoveNextPoint()
+    public LineSegment FindRightNeighbor(LineSegment l)
     {
-        return (FindRightNeighbor(mCurrentPoint) != null);
-    }
-
-    public LineEvent FindRightNeighbor(Vector3 P)
-    {
-        VecCompare vcomparer = new VecCompare();
+        IComparer<LineSegment> comparer = tree.Comparer;
         int order;
 
+        if (Root == null)
+        {
+            return null;
+        }
         Reset();
         stack.Clear();
         stack.Push(Root);
@@ -44,7 +33,7 @@ public class LineEnumerator : RBTree<LineEvent>.Enumerator
         while (stack.Count > 0)
         {
             current = stack.Peek();
-            order = vcomparer.Compare(Current.Point, P);
+            order = comparer.Compare(Current, l);
 
             // P > current node, move right or stop
             if (order < 0)
@@ -89,11 +78,15 @@ public class LineEnumerator : RBTree<LineEvent>.Enumerator
         return null;
     }
 
-    public LineEvent FindLeftNeighbor(Vector3 P)
+    public LineSegment FindLeftNeighbor(LineSegment l)
     {
-        VecCompare vcomparer = new VecCompare();
+        IComparer<LineSegment> comparer = tree.Comparer;
         int order;
 
+        if (Root == null)
+        {
+            return null;
+        }
         Reset();
         stack.Clear();
         stack.Push(Root);
@@ -101,7 +94,7 @@ public class LineEnumerator : RBTree<LineEvent>.Enumerator
         while (stack.Count > 0)
         {
             current = stack.Peek();
-            order = vcomparer.Compare(Current.Point, P);
+            order = comparer.Compare(Current, l);
             // P >= current node, move right or stop
             if (order < 0)
             {
@@ -148,52 +141,6 @@ public class LineEnumerator : RBTree<LineEvent>.Enumerator
         return null;
     }
 
-    public RBTree<LineEvent>.Node MoveToPoint(Vector3 P)
-    {
-        VecCompare vcomparer = new VecCompare();
-        int order;
-
-        Reset();
-        stack.Clear();
-        stack.Push(Root);
-        while (stack.Count > 0)
-        {
-            current = stack.Peek();
-            order = vcomparer.Compare(current.Item.Point, P);
-            // P > current node, move right
-            if (order < 0)
-            {
-                if (current.Right != null)
-                {
-                    current = current.Right;
-                    stack.Push(current);
-                }
-                else
-                {
-                    break;
-                }
-            }
-            // P <= current node, move left
-            else if (order > 0)
-            {
-                if (current.Left != null)
-                {
-                    current = current.Left;
-                    stack.Push(current);
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            else
-            {
-                return current;
-            }
-        }
-        return null;
-    }
-
     public virtual bool MovePrev()
     {
         if (stack.Count == 0)
@@ -202,7 +149,7 @@ public class LineEnumerator : RBTree<LineEvent>.Enumerator
             return false;
         }
         current = stack.Pop();
-        RBTree<LineEvent>.Node node = current.Left;
+        RBTree<LineSegment>.Node node = current.Left;
         if (node != null)
         {
             stack.Push(node);
@@ -216,21 +163,10 @@ public class LineEnumerator : RBTree<LineEvent>.Enumerator
         return true;
     }
 
-    public LineEvent CollectAtPoint()
-    {
-        RBTree<LineEvent>.Node pointRoot = MoveToPoint(mCurrentPoint);
-
-        if (pointRoot == null)
-        {
-            return null;
-        }
-        return pointRoot.Item;
-    }
-
     public override string ToString()
     {
-        String s = "";
-        foreach (RBTree<LineEvent>.Node n in stack)
+        string s = "";
+        foreach (RBTree<LineSegment>.Node n in stack)
         {
             s += n.Item.ToString() + '\n';
         }

@@ -50,10 +50,17 @@ public class LineIntersection : MonoBehaviour
             Test = false;
             Clear();
             mSaved = new List<LineSegment>();
-            mSaved.Add(new LineSegment(new Vector3(-4.1f, 4.4f, 0), new Vector3(4.0f, 3.0f, 0)));
-            mSaved.Add(new LineSegment(new Vector3(-2.8f, 2.8f, 0), new Vector3(-0.8f, 4.0f, 0)));
-            mSaved.Add(new LineSegment(new Vector3(-3.4f, 2.5f, 0), new Vector3(1.5f, 0.3f, 0)));
-            mSaved.Add(new LineSegment(new Vector3(-2.4f, 3.2f, 0), new Vector3(-1.7f, -1.7f, 0)));
+//            mSaved.Add(new LineSegment(new Vector3(-4.1f, 4.4f, 0), new Vector3(4.0f, 3.0f, 0)));
+//            mSaved.Add(new LineSegment(new Vector3(-2.8f, 2.8f, 0), new Vector3(-0.8f, 4.0f, 0)));
+//            mSaved.Add(new LineSegment(new Vector3(-3.4f, 2.5f, 0), new Vector3(1.5f, 0.3f, 0)));
+//            mSaved.Add(new LineSegment(new Vector3(-2.4f, 3.2f, 0), new Vector3(-1.7f, -1.7f, 0)));
+
+            mSaved.Add(new LineSegment(new Vector3(-3.8f, 0.7f, 0), new Vector3(3.4f, 3.7f, 0)));
+            mSaved.Add(new LineSegment(new Vector3(-4.9f, 2.3f, 0), new Vector3(3.5f, -3.3f, 0)));
+            mSaved.Add(new LineSegment(new Vector3(-3.7f, -0.4f, 0), new Vector3(0.9f, 0.3f, 0)));
+            mSaved.Add(new LineSegment(new Vector3(-2.5f, 3.7f, 0), new Vector3(-1.4f, -2.2f, 0)));
+//            mSaved.Add(new LineSegment(new Vector3(-3.0f, -2.7f, 0), new Vector3(4.1f, -1.1f, 0)));
+
             mLines.AddLines(mSaved);
             mLinesToRender.Recolor();
             mLinesToRender.Display();

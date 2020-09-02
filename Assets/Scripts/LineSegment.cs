@@ -37,57 +37,12 @@ public class LineSegment
     public int VertexIndex = -1;
     public List<LineEvent> Users = new List<LineEvent>();
 
-
-    public void AddUser(LineEvent e)
+    public float CalcY(float x)
     {
-        for (int i = 0; i < Users.Count; ++i)
-        {
-            LineEvent u = Users[i];
+        Vector3 delta = End - Start;
+        float slope = delta.y / delta.x;
 
-            if ((u == e) ||
-                (u.Point == e.Point))
-            {
-                return;
-            }
-            if (u.Point.x > e.Point.x)
-            {
-                Users.Insert(i, e);
-                return;
-            }
-        }
-        Users.Add(e);
-    }
-
-    public void RemoveUser(LineEvent e)
-    {
-        Users.Remove(e);
-    }
-
-    public void RemoveUsers(float x)
-    {
-        for (int i = 0; i < Users.Count; ++i)
-        {
-            if (Users[i].Point.x > x)
-            {
-                break;
-            }
-            Users.RemoveAt(i);
-            --i;
-        }
-    }
-
-    public LineEvent FindUser(float x)
-    {
-        LineEvent le = Users[0];
-        for (int i = 1; i < Users.Count; ++i)
-        {
-            if (Users[i].Point.x > x)
-            {
-                break;
-            }
-            le = Users[i];
-        }
-        return le;
+        return slope * (x - Start.x) + Start.y;
     }
 
     public int FindIntersection(LineSegment line2, ref Vector3 intersection)

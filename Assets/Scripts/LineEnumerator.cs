@@ -17,7 +17,7 @@ public class LineEnumerator : RBTree<LineSegment>.Enumerator
         version = tree.Version;
     }
 
-    public LineSegment FindRightNeighbor(LineSegment l)
+    public LineSegment FindTopNeighbor(LineSegment l)
     {
         IComparer<LineSegment> comparer = tree.Comparer;
         int order;
@@ -78,7 +78,7 @@ public class LineEnumerator : RBTree<LineSegment>.Enumerator
         return null;
     }
 
-    public LineSegment FindLeftNeighbor(LineSegment l)
+    public LineSegment FindBottomNeighbor(LineSegment l)
     {
         IComparer<LineSegment> comparer = tree.Comparer;
         int order;
@@ -161,6 +161,48 @@ public class LineEnumerator : RBTree<LineSegment>.Enumerator
             }
         }
         return true;
+    }
+
+    public RBTree<LineSegment>.Node FindNode(LineSegment item)
+    {
+        RBTree<LineSegment>.Node current = Root;
+        IComparer<LineSegment> comparer = tree.Comparer;
+
+        Reset();
+        stack.Clear();
+        while (current != null)
+        {
+            stack.Push(current);
+            if (item == current.Item)
+            {
+                return current;
+            }
+            int order = comparer.Compare(item, current.Item);
+
+            current = (order < 0) ? current.Left : current.Right;
+        }
+        return null;
+    }
+
+    public List<LineSegment> CollectAt(LineSegment l, Vector3 p)
+    {
+        RBTree<LineSegment>.Node outVal = FindNode(l);
+        List<LineSegment> collected = new List<LineSegment>();
+
+        if (outVal == null)
+        {
+            return collected;
+        }
+        while (MoveNext())
+        {
+            float t = p.y - Current.CalcY(p.x);
+            if (Math.Abs(t) > LineSegment.EPSILON)
+            {
+                break;
+            }
+            collected.Add(Current);
+        }
+        return collected;
     }
 
     public override string ToString()

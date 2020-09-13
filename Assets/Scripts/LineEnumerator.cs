@@ -188,11 +188,21 @@ public class LineEnumerator : RBTree<LineSegment>.Enumerator
     {
         RBTree<LineSegment>.Node outVal = FindNode(l);
         List<LineSegment> collected = new List<LineSegment>();
-
         if (outVal == null)
         {
             return collected;
         }
+        Stack<RBTree<LineSegment>.Node> s = new Stack<RBTree<LineSegment>.Node>(stack.Reverse());
+        MoveNext();
+        while (MovePrev())
+        {
+            float t = p.y - Current.CalcY(p.x);
+            if (Math.Abs(t) > LineSegment.EPSILON)
+            {
+                break;
+            }
+        }
+        stack = s;
         while (MoveNext())
         {
             float t = p.y - Current.CalcY(p.x);

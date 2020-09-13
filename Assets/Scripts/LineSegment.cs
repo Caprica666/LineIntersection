@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class LineSegment
 {
-    public const float EPSILON = 2e-6f;
+    public const float EPSILON = 1e-5f;
 
     public LineSegment(Vector3 start, Vector3 end)
     {
@@ -36,6 +36,12 @@ public class LineSegment
     protected Vector3 mEnd;
     public int VertexIndex = -1;
     public List<LineEvent> Users = new List<LineEvent>();
+
+    public void Set(Vector3 start, Vector3 end)
+    {
+        mStart = start;
+        mEnd = end;
+    }
 
     public float CalcY(float x)
     {

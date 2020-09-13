@@ -80,17 +80,16 @@ public class LineCompare : Comparer<LineSegment>
 
     public override int Compare(LineSegment s1, LineSegment s2)
     {
-        float epsilon = 1e-6f;
         float y1 = s1.CalcY(CurrentX);
         float y2 = s2.CalcY(CurrentX);
         float t = y1 - y2;
 
-        if (Math.Abs(t) > epsilon)
+        if (Math.Abs(t) > LineSegment.EPSILON)
         {
             return (t > 0) ? 1 : -1;
         }
         t = s1.End.y - s2.End.y;
-        if (Math.Abs(t) > epsilon)
+        if (Math.Abs(t) > LineSegment.EPSILON)
         {
             return (t > 0) ? 1 : -1;
         }
@@ -104,17 +103,6 @@ public class EventCompare : IComparer<LineEvent>
     {
         VecCompare vcompare = new VecCompare();
 
-        if (p1.Start.x == p1.End.x)
-        {
-            if (p2.Start.x != p2.End.x)
-            {
-                return 1;
-            }
-        }
-        else if (p2.Start.x == p2.End.x)
-        {
-            return -1;
-        }
         return vcompare.Compare(p1.Point, p2.Point);
     }
 }
@@ -143,7 +131,6 @@ public class LineGroup
 {
     private RBTree<LineEvent> mEventQ;
     private RBTree<LineSegment> mActiveLines;
-    private SortedList<Vector3, Vector3> mVertices;
     private List<Vector3> mIntersections;
     private LineMesh mLineMesh = null;
     private PointMesh mPointMesh = null;
@@ -245,20 +232,20 @@ public class LineGroup
         return mIntersections;
     }
 
-    public void RemoveActive(LineEvent e, bool updateMesh = false)
+    public void RemoveActive(LineSegment s, bool updateMesh = false)
     {
         if (updateMesh)
         {
-            mActiveLines.Remove(e.Line);
+            mActiveLines.Remove(s);
             if (mLineMesh != null)
             {
-                int vindex = e.Line.VertexIndex;
+                int vindex = s.VertexIndex;
                 mLineMesh.Update(vindex, Color.black);
             }
         }
         else
         {
-            mActiveLines.Remove(e.Line);
+            mActiveLines.Remove(s);
         }
     }
 
@@ -287,28 +274,38 @@ public class LineGroup
         mActiveLines.Add(l);
     }
 
-    public void AddIsectEvent(LineSegment s1, LineSegment s2, Vector3 p,float curx)
+    public void AddIsectEvent(LineSegment s1, LineSegment s2, Vector3 p)
     {
         LineEvent p1 = new LineEvent(p, s1);
-        LineEvent p2 = new LineEvent(p, s2);
-        LineEvent p3;
+        LineEvent p2;
         LineCompare comparer = new LineCompare();
 
-        comparer.CurrentX = curx;
-        if (comparer.Compare(s1, s2) < 0)
+        if (mCompareLines.CurrentX >= p.x)
         {
-            p2.mLine = s1;
+            return;
         }
-        if (mEventQ.TryGetValue(p2, out p3))
+        /*
+        float t = s2.End.y - s1.End.y;
+        if (t < 0)
         {
-            if (comparer.Compare(p3.Line, p2.Line) < 0)
+            p1.mLine = s2;
+        }
+        if (mEventQ.TryGetValue(p1, out p2))
+        {
+            t = p2.End.y - p1.End.y;
+            if (t < 0)
             {
-                p3.mLine = p2.Line;
+                p2.mLine = p1.Line;
             }
         }
         else
         {
-            mEventQ.Add(p2);
+            mEventQ.Add(p1);
+        }
+        */
+        if (!mEventQ.TryGetValue(p1, out p2))
+        {
+            mEventQ.Add(p1);
         }
     }
 
@@ -322,74 +319,64 @@ public class LineGroup
         Vector3 isect = new Vector3();
         LineSegment bottomNeighbor;
         LineSegment topNeighbor;
+        List<LineSegment> reverseus;
         float curX = e.Point.x;
-        List<LineSegment> addus = lineiter.CollectAt(e.Line, e.Point);
 
-        mCompareLines.CurrentX = curX;
         if (e.Start == e.Point)
         {
             AddActive(e.Line);
-            addus.Add(e.Line);
         }
-        if (addus.Count > 1)
+        reverseus = lineiter.CollectAt(e.Line, e.Point);
+        if (reverseus.Count > 1)
         {
             MarkIntersection(e.Point);
         }
-        for (int i = 0; i < addus.Count; ++i)
+        for (int i = 0; i < reverseus.Count; ++i)
         {
-            LineSegment ls = e.Line;
-            if (ls.End == e.Point)
+            LineSegment l = reverseus[i];
+            if (l.End == e.Point)
             {
-                RemoveActive(e, true);
-                addus.Remove(ls);
-                --i;
+                RemoveActive(l, true);
+                reverseus.RemoveAt(i);
             }
         }
-        if (addus.Count == 0)
+        if (reverseus.Count == 0)
         {
+            mCompareLines.CurrentX = curX;
             bottomNeighbor = lineiter.FindBottomNeighbor(e.Line);
             topNeighbor = lineiter.FindTopNeighbor(e.Line);
             if ((bottomNeighbor != null) &&
                 (topNeighbor != null) &&
-                (bottomNeighbor.FindIntersection(topNeighbor, ref isect) > 0) &&
-                (isect.x > curX))
+                (bottomNeighbor.FindIntersection(topNeighbor, ref isect) > 0))
             {
-                AddIsectEvent(bottomNeighbor, topNeighbor, isect, curX);
-                mActiveLines.Remove(bottomNeighbor);
-                mActiveLines.Remove(topNeighbor);
-                AddActive(bottomNeighbor);
-                AddActive(topNeighbor);
+                AddIsectEvent(bottomNeighbor, topNeighbor, isect);
             }
         }
         else
         {
-            foreach (LineSegment ls in addus)
+            foreach (LineSegment l in reverseus)
             {
-                mActiveLines.Remove(ls);
+                RemoveActive(l);
             }
-            foreach (LineSegment ls in addus)
+            mCompareLines.CurrentX = curX;
+            foreach (LineSegment l in reverseus)
             {
-                AddActive(ls);
+                AddActive(l);
             }
-            LineSegment top = addus[0];
-            LineSegment bottom = addus[addus.Count - 1];
+            LineSegment top = reverseus[0];
+            LineSegment bottom = reverseus[reverseus.Count - 1];
             bottomNeighbor = lineiter.FindBottomNeighbor(bottom);
             topNeighbor = lineiter.FindTopNeighbor(top);
+
             if ((bottomNeighbor != null) &&
-                (bottomNeighbor.FindIntersection(bottom, ref isect) > 0) &&
-                (isect.x > curX))
+                (bottomNeighbor.FindIntersection(bottom, ref isect) > 0))
             {
-                AddIsectEvent(bottomNeighbor, bottom, isect, curX);
-                mActiveLines.Remove(bottomNeighbor);
-                AddActive(bottomNeighbor);
+                AddIsectEvent(bottomNeighbor, bottom, isect);
             }
             if ((topNeighbor != null) &&
-                (topNeighbor.FindIntersection(top, ref isect) > 0) &&
-                (isect.x > curX))
+                (topNeighbor.FindIntersection(top, ref isect) > 0))
             {
-                AddIsectEvent(top, topNeighbor, isect, curX);
-                mActiveLines.Remove(topNeighbor);
-                AddActive(topNeighbor);
+                AddIsectEvent(top, topNeighbor, isect);
             }
         }
         mEventQ.Remove(e);

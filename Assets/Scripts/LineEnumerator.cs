@@ -184,37 +184,6 @@ public class LineEnumerator : RBTree<LineSegment>.Enumerator
         return null;
     }
 
-    public List<LineSegment> CollectAt(LineSegment l, Vector3 p)
-    {
-        RBTree<LineSegment>.Node outVal = FindNode(l);
-        List<LineSegment> collected = new List<LineSegment>();
-        if (outVal == null)
-        {
-            return collected;
-        }
-        Stack<RBTree<LineSegment>.Node> s = new Stack<RBTree<LineSegment>.Node>(stack.Reverse());
-        MoveNext();
-        while (MovePrev())
-        {
-            float t = p.y - Current.CalcY(p.x);
-            if (Math.Abs(t) > LineSegment.EPSILON)
-            {
-                break;
-            }
-        }
-        stack = s;
-        while (MoveNext())
-        {
-            float t = p.y - Current.CalcY(p.x);
-            if (Math.Abs(t) > LineSegment.EPSILON)
-            {
-                break;
-            }
-            collected.Add(Current);
-        }
-        return collected;
-    }
-
     public override string ToString()
     {
         string s = "";

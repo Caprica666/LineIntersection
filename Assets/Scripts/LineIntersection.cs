@@ -26,7 +26,7 @@ public class LineIntersection : MonoBehaviour
         mIntersections = new PointMesh(mf.mesh);
         mIntersections.PointSize = 0.2f;
         mLinesToRender = new LineMesh(gameObject.GetComponent<MeshFilter>().mesh);
-        mLines = new LineGroup(mLinesToRender, mIntersections);
+        mLines = new LineGroup(mLinesToRender);
     }
 
     private void Update()
@@ -55,11 +55,15 @@ public class LineIntersection : MonoBehaviour
 //            mSaved.Add(new LineSegment(new Vector3(-3.4f, 2.5f, 0), new Vector3(1.5f, 0.3f, 0)));
 //            mSaved.Add(new LineSegment(new Vector3(-2.4f, 3.2f, 0), new Vector3(-1.7f, -1.7f, 0)));
 
-            mSaved.Add(new LineSegment(new Vector3(-3.8f, 0.7f, 0), new Vector3(3.4f, 3.7f, 0)));
-            mSaved.Add(new LineSegment(new Vector3(-4.9f, 2.3f, 0), new Vector3(3.5f, -3.3f, 0)));
-            mSaved.Add(new LineSegment(new Vector3(-3.7f, -0.4f, 0), new Vector3(0.9f, 0.3f, 0)));
-            mSaved.Add(new LineSegment(new Vector3(-2.5f, 3.7f, 0), new Vector3(-1.4f, -2.2f, 0)));
-//            mSaved.Add(new LineSegment(new Vector3(-3.0f, -2.7f, 0), new Vector3(4.1f, -1.1f, 0)));
+//            mSaved.Add(new LineSegment(new Vector3(-3.8f, 0.7f, 0), new Vector3(3.4f, 3.7f, 0)));
+//            mSaved.Add(new LineSegment(new Vector3(-4.9f, 2.3f, 0), new Vector3(3.5f, -3.3f, 0)));
+//            mSaved.Add(new LineSegment(new Vector3(-3.7f, -0.4f, 0), new Vector3(0.9f, 0.3f, 0)));
+//            mSaved.Add(new LineSegment(new Vector3(-2.5f, 3.7f, 0), new Vector3(-1.4f, -2.2f, 0)));
+
+            mSaved.Add(new LineSegment(new Vector3(-4.8f, 4.6f, 0), new Vector3(4.5f, -3.5f, 0)));
+            mSaved.Add(new LineSegment(new Vector3(-1.4f, 3.3f, 0), new Vector3(2.8f, -4.6f, 0)));
+            mSaved.Add(new LineSegment(new Vector3(-3.9f, -2.2f, 0), new Vector3(3.5f, -2.9f, 0)));
+            mSaved.Add(new LineSegment(new Vector3(-4.0f, 9.8f, 0), new Vector3(2.2f, -1.1f, 0)));
 
             mLines.AddLines(mSaved);
             mLinesToRender.Recolor();
@@ -86,18 +90,18 @@ public class LineIntersection : MonoBehaviour
 
     public IEnumerator FindIntersections()
     {
-//        Stopwatch stopWatch = new Stopwatch();
+        Stopwatch stopWatch = new Stopwatch();
         yield return new WaitForEndOfFrame();
         yield return new WaitForEndOfFrame();
         yield return new WaitForEndOfFrame();
         yield return new WaitForEndOfFrame();
-
-        //        stopWatch.Start();
-        StartCoroutine(mLines.ShowIntersections());
-//        stopWatch.Stop();
-//        ExecutionTime = (float) stopWatch.Elapsed.TotalSeconds;
+        List<Vector3> intersections = new List<Vector3>();
+        stopWatch.Start();
+        mLines.FindIntersections(intersections);
+        stopWatch.Stop();
+        ExecutionTime = (float) stopWatch.Elapsed.TotalSeconds;
         Debug.Log(string.Format("Execution Time = {0}", ExecutionTime));
-//        mIntersections.MakeMesh(intersections);
+        mIntersections.MakeMesh(intersections);
         yield return new WaitForEndOfFrame();
     }
 

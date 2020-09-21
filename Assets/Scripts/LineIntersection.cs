@@ -12,7 +12,8 @@ public class LineIntersection : MonoBehaviour
     public float ExecutionTime;
     public bool New;
     public bool PlaneSweep;
-    public bool Test;
+    public bool Test1;
+    public bool Test2;
 
     private LineGroup mLines;
     private LineMesh mLinesToRender;
@@ -26,7 +27,7 @@ public class LineIntersection : MonoBehaviour
         mIntersections = new PointMesh(mf.mesh);
         mIntersections.PointSize = 0.2f;
         mLinesToRender = new LineMesh(gameObject.GetComponent<MeshFilter>().mesh);
-        mLines = new LineGroup(mLinesToRender);
+        mLines = new LineGroup(mLinesToRender, mIntersections);
     }
 
     private void Update()
@@ -45,21 +46,25 @@ public class LineIntersection : MonoBehaviour
             mLinesToRender.Display();
             StartCoroutine(FindIntersections());
         }
-        else if (Test)
+        else if (Test1)
         {
-            Test = false;
+            Test1 = false;
             Clear();
             mSaved = new List<LineSegment>();
-//            mSaved.Add(new LineSegment(new Vector3(-4.1f, 4.4f, 0), new Vector3(4.0f, 3.0f, 0)));
-//            mSaved.Add(new LineSegment(new Vector3(-2.8f, 2.8f, 0), new Vector3(-0.8f, 4.0f, 0)));
-//            mSaved.Add(new LineSegment(new Vector3(-3.4f, 2.5f, 0), new Vector3(1.5f, 0.3f, 0)));
-//            mSaved.Add(new LineSegment(new Vector3(-2.4f, 3.2f, 0), new Vector3(-1.7f, -1.7f, 0)));
-
-//            mSaved.Add(new LineSegment(new Vector3(-3.8f, 0.7f, 0), new Vector3(3.4f, 3.7f, 0)));
-//            mSaved.Add(new LineSegment(new Vector3(-4.9f, 2.3f, 0), new Vector3(3.5f, -3.3f, 0)));
-//            mSaved.Add(new LineSegment(new Vector3(-3.7f, -0.4f, 0), new Vector3(0.9f, 0.3f, 0)));
-//            mSaved.Add(new LineSegment(new Vector3(-2.5f, 3.7f, 0), new Vector3(-1.4f, -2.2f, 0)));
-
+            mSaved.Add(new LineSegment(new Vector3(-3.8f, 0.7f, 0), new Vector3(3.4f, 3.7f, 0)));
+            mSaved.Add(new LineSegment(new Vector3(-4.9f, 2.3f, 0), new Vector3(3.5f, -3.3f, 0)));
+            mSaved.Add(new LineSegment(new Vector3(-3.7f, -0.4f, 0), new Vector3(0.9f, 0.3f, 0)));
+            mSaved.Add(new LineSegment(new Vector3(-2.5f, 3.7f, 0), new Vector3(-1.4f, -2.2f, 0)));
+            mLines.AddLines(mSaved);
+            mLinesToRender.Recolor();
+            mLinesToRender.Display();
+            StartCoroutine(ShowIntersections());
+        }
+        else if (Test2)
+        {
+            Test2 = false;
+            Clear();
+            mSaved = new List<LineSegment>();
             mSaved.Add(new LineSegment(new Vector3(-4.8f, 4.6f, 0), new Vector3(4.5f, -3.5f, 0)));
             mSaved.Add(new LineSegment(new Vector3(-1.4f, 3.3f, 0), new Vector3(2.8f, -4.6f, 0)));
             mSaved.Add(new LineSegment(new Vector3(-3.9f, -2.2f, 0), new Vector3(3.5f, -2.9f, 0)));
@@ -68,7 +73,7 @@ public class LineIntersection : MonoBehaviour
             mLines.AddLines(mSaved);
             mLinesToRender.Recolor();
             mLinesToRender.Display();
-            StartCoroutine(FindIntersections());
+            StartCoroutine(ShowIntersections());
         }
     }
 
@@ -102,6 +107,16 @@ public class LineIntersection : MonoBehaviour
         ExecutionTime = (float) stopWatch.Elapsed.TotalSeconds;
         Debug.Log(string.Format("Execution Time = {0}", ExecutionTime));
         mIntersections.MakeMesh(intersections);
+        yield return new WaitForEndOfFrame();
+    }
+
+    public IEnumerator ShowIntersections()
+    {
+        yield return new WaitForEndOfFrame();
+        yield return new WaitForEndOfFrame();
+        yield return new WaitForEndOfFrame();
+        yield return new WaitForEndOfFrame();
+        StartCoroutine(mLines.ShowIntersections());
         yield return new WaitForEndOfFrame();
     }
 

@@ -123,13 +123,9 @@ public class EventCompare : IComparer<LineEvent>
         {
             return order;
         }
-        float t = p1.Start.y - p2.Start.y;
-
-        if (Math.Abs(t) < LineSegment.EPSILON)
-        {
-            return 0;
-        }
-        return (p1.Start.y > p2.Start.y) ? -1 : 1;
+        LineCompare lcompare = new LineCompare();
+        lcompare.CurrentX = p1.Point.x;
+        return lcompare.Compare(p1.Line, p2.Line);
     }
 }
 

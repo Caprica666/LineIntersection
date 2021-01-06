@@ -51,10 +51,12 @@ public class LineIntersection : MonoBehaviour
             Test1 = false;
             Clear();
             mSaved = new List<LineSegment>();
-            mSaved.Add(new LineSegment(new Vector3(-3.8f, 0.7f, 0), new Vector3(3.4f, 3.7f, 0)));
-            mSaved.Add(new LineSegment(new Vector3(-4.9f, 2.3f, 0), new Vector3(3.5f, -3.3f, 0)));
-            mSaved.Add(new LineSegment(new Vector3(-3.7f, -0.4f, 0), new Vector3(0.9f, 0.3f, 0)));
-            mSaved.Add(new LineSegment(new Vector3(-2.5f, 3.7f, 0), new Vector3(-1.4f, -2.2f, 0)));
+            mSaved.Add(new LineSegment(new Vector3(-3, -2.5f, 0), new Vector3(-1.1f, 2, 0)));
+            mSaved.Add(new LineSegment(new Vector3(-1.1f, 2, 0), new Vector3(1.6f, -3, 0)));
+            mSaved.Add(new LineSegment(new Vector3(1.6f, -3, 0), new Vector3(-3, -2.5f, 0)));
+            mSaved.Add(new LineSegment(new Vector3(0.1f, -1.5f, 0), new Vector3(0.2f, -0.1f, 0)));
+            mSaved.Add(new LineSegment(new Vector3(0.2f, -0.1f, 0), new Vector3(1.5f, 2, 0)));
+            mSaved.Add(new LineSegment(new Vector3(1.5f, 2, 0), new Vector3(0.1f, -1.5f, 0)));
             mLines.AddLines(mSaved);
             mLinesToRender.Recolor();
             mLinesToRender.Display();
